@@ -1,0 +1,86 @@
+package org.abgijonjovellanos.visor
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.Modifier
+import org.abgijonjovellanos.visor.ui.theme.ABGijonJovellanosTheme
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.WebSocket
+import okhttp3.WebSocketListener
+import android.util.Base64
+import android.graphics.BitmapFactory
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.Image
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.runtime.State
+import androidx.compose.runtime.*
+import androidx.compose.ui.res.painterResource
+import kotlinx.coroutines.delay
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
+
+            setContent {
+                ABGijonJovellanosTheme {
+                    SplashScreen()
+                }
+            }
+        }
+    }
+
+@Composable
+fun WebSocketImage(imageBitmapState: State<android.graphics.Bitmap?>) {
+    imageBitmapState.value?.let { bitmap ->
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            //contentScale = ContentScale.FillBounds
+            contentScale = ContentScale.Fit
+            //contentScale = ContentScale.Crop
+        )
+    }
+}
+
+@Composable
+fun SplashScreen() {
+    var showSplashScreen by remember { mutableStateOf(true) }
+    val imageBitmapState = remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+
+    LaunchedEffect(Unit) {
+        delay(3000)  // Esperar 3 segundos
+        showSplashScreen = false
+        // Inicializa y establece la conexión WebSocket después de mostrar el SplashScreen
+        initWebSocket(imageBitmapState)
+    }
+
+    if (showSplashScreen) {
+        // Mostrar el logo
+        Image(painterResource(id = R.drawable.logo), contentDescription = "Logo",
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Fit )
+    } else {
+        // Mostrar el contenido principal (WebSocketImage)
+        WebSocketImage(imageBitmapState)
+    }
+}
+
+fun initWebSocket(imageBitmapState: MutableState<android.graphics.Bitmap?>) {
+    val client = OkHttpClient()
+    val request = Request.Builder().url("wss://dou-server.duckdns.org:9999").build()
+    client.newWebSocket(request, object : WebSocketListener() {
+        override fun onMessage(webSocket: WebSocket, text: String) {
+            val imageBytes = Base64.decode(text, Base64.DEFAULT)
+            val decodedImage = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            imageBitmapState.value = decodedImage
+        }
+    })
+}

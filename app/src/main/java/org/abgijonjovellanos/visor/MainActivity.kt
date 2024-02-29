@@ -147,7 +147,7 @@ class WebSocketClient {
             override fun onMessage(webSocket: WebSocket, text: String) {
                 when {
                     text.startsWith("TOP_VELOCITIES:") -> {
-                        // Actualizar topVelocities con los datos recibidos
+                        SoundPlayer(activity).playSound(R.raw.new_velocity_sound)
                     }
 
                     text.startsWith("IMAGE_VELOCITY:") -> {
@@ -301,8 +301,8 @@ class SoundPlayer(private val context: Context) {
         mediaPlayer?.start()
 
         // Opcional: Liberar el recurso una vez que el sonido haya terminado de reproducirse
-        mediaPlayer?.setOnCompletionListener {
+        /*mediaPlayer?.setOnCompletionListener {
             it.release()
-        }
+        }*/
     }
 }

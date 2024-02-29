@@ -123,7 +123,7 @@ if __name__ == '__main__':
 
                 # Procesar la imagen con la red neuronal adecuada
                 if choice == "BALL":
-                    frame = await process_with_ball_network()
+                    frame = await process_with_ball_network(client)
                 elif choice == "BEST":
                     frame = await process_with_person_network()
                 else:
@@ -142,7 +142,7 @@ if __name__ == '__main__':
         return frame
 
 
-    async def process_with_ball_network():
+    async def process_with_ball_network(client):
         global max_speed_kph, max_speed_frame, max_speed_kph_formatted, rf_ball
         global prev_time, prev_position, ball_speed_kps
 
@@ -199,6 +199,11 @@ if __name__ == '__main__':
                 if update_top_speeds(ball_speed_kph_formatted, timestamp, img_path):
                     # Guarda la imagen codificada en el archivo
                     cv2.imwrite(img_path, raw_frame)
+                    sorted_speeds = sorted(list(top_speeds.queue), reverse=True)
+                    text = "TOP_VELOCITIES:"
+                    for i, (speed, timestamp, image_name) in enumerate(sorted_speeds, start=1):
+                        text += f"{i},{speed:.2f},{timestamp},{image_name}"
+                    await client.send(text)
 
                 # print(f"Velocidad del balón: {ball_speed_kph_formatted} km/h")
             else:
